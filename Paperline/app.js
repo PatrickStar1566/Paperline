@@ -67,7 +67,7 @@ let current='welcome';let currentPath=null;const editor=document.getElementById(
 const desktop=window.electronAPI&&window.electronAPI.isElectron;
 function fileName(filePath){return String(filePath||'').split(/[\\/]/).pop().replace(/\.(markdown|md)$/i,'')||'未命名文档'}
 function showToast(message){const toast=document.getElementById('toast');toast.textContent=message;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1400)}
-function addExternalFile(file){const key=`file:${file.filePath}`;if(!docs[key]){docs[key]={title:fileName(file.filePath),content:file.content,date:'最后编辑于刚刚',read:'1 分钟阅读',filePath:file.filePath};const row=document.createElement('button');row.className='file-row';row.dataset.file=key;row.innerHTML='<span class="file-icon">M</span><span class="file-name"></span><span class="file-dot"></span>';row.querySelector('.file-name').textContent=docs[key].title;row.addEventListener('click',()=>load(key));const firstArchive=document.querySelector('.tree-group.muted');document.getElementById('fileTree').insertBefore(row,firstArchive||null)}else{docs[key].content=file.content;docs[key].filePath=file.filePath}currentPath=file.filePath;load(key)}
+function addExternalFile(file){const key=`file:${file.filePath}`;if(!docs[key]){docs[key]={title:fileName(file.filePath),content:file.content,date:'最后编辑于刚刚',read:'1 分钟阅读',filePath:file.filePath};const row=document.createElement('button');row.className='file-row';row.dataset.file=key;row.innerHTML='<span class="file-icon">M</span><span class="file-name"></span><span class="file-dot"></span>';row.querySelector('.file-name').textContent=docs[key].title;row.addEventListener('click',()=>load(key));const firstArchive=document.querySelector('.tree-group.muted');document.getElementById('fileTree').insertBefore(row,firstArchive||null)}else{docs[key].content=file.content;docs[key].filePath=file.filePath}currentPath=file.filePath;load(key);if(typeof setPaperlineMode==='function')setPaperlineMode('preview');persistPaperlineState()}
 async function openDesktopFile(){if(!desktop)return;const file=await window.electronAPI.openFile();if(file)addExternalFile(file)}
 async function saveDesktopFile(saveAs=false){if(!desktop)return false;saveStatus.textContent='正在保存…';try{const result=await (saveAs?window.electronAPI.saveFileAs:window.electronAPI.saveFile)({filePath:saveAs?null:currentPath,title:docs[current].title,content:editor.value});if(!result){saveStatus.textContent='未保存';return false}currentPath=result.filePath;docs[current].filePath=currentPath;docs[current].title=fileName(currentPath);document.getElementById('docTitle').textContent=docs[current].title;const row=document.querySelector(`.file-row[data-file="${CSS.escape(current)}"] .file-name`);if(row)row.textContent=docs[current].title;saveStatus.textContent='已保存';showToast('已保存 Markdown');return true}catch(error){console.error(error);saveStatus.textContent='保存失败';showToast('保存失败');return false}}
 function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
@@ -86,3 +86,22 @@ document.getElementById('saveFileBtn').addEventListener('click',()=>{if(desktop)
 if(desktop){window.electronAPI.onFileOpened(addExternalFile);window.electronAPI.onMenuCommand((command)=>{if(command==='save')saveDesktopFile(false);if(command==='save-as')saveDesktopFile(true)});window.electronAPI.getInitialFile().then((file)=>{if(file)addExternalFile(file)});editor.addEventListener('keydown',(event)=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='s'){event.preventDefault();saveDesktopFile(false)}if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='o'){event.preventDefault();openDesktopFile()}})}
 document.getElementById('openFileBtn').addEventListener('click',openDesktopFile);
 load('welcome');
+
+// Persist the last document and reading mode locally between launches.
+const PAPERLINE_STATE_KEY='paperline:last-state';
+let paperlineState={};
+try{paperlineState=JSON.parse(localStorage.getItem(PAPERLINE_STATE_KEY)||'{}')}catch(_){paperlineState={}}
+function persistPaperlineState(){try{localStorage.setItem(PAPERLINE_STATE_KEY,JSON.stringify({key:current,path:currentPath,mode:document.querySelector('.mode-btn.active')?.dataset.mode||'preview',docs}))}catch(_){} }
+function setPaperlineMode(mode){const button=document.querySelector(`.mode-btn[data-mode="${mode}"]`);if(button)button.click()}
+if(paperlineState.docs&&typeof paperlineState.docs==='object')Object.keys(paperlineState.docs).forEach(k=>{if(docs[k])docs[k].content=paperlineState.docs[k].content||docs[k].content});
+if(paperlineState.key&&paperlineState.docs?.[paperlineState.key]&&!docs[paperlineState.key]){const saved=paperlineState.docs[paperlineState.key];docs[paperlineState.key]=saved;const row=document.createElement('button');row.className='file-row';row.dataset.file=paperlineState.key;row.innerHTML='<span class="file-icon">M</span><span class="file-name"></span>';row.querySelector('.file-name').textContent=saved.title||'最近打开的文档';document.getElementById('fileTree').insertBefore(row,document.querySelector('.tree-group.muted'));row.addEventListener('click',()=>load(paperlineState.key));}
+if(paperlineState.key&&docs[paperlineState.key])load(paperlineState.key);
+setPaperlineMode(paperlineState.mode==='edit'?'edit':'preview');
+editor.addEventListener('input',persistPaperlineState);
+document.querySelectorAll('.file-row').forEach(b=>b.addEventListener('click',persistPaperlineState));
+document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',persistPaperlineState));
+if(desktop){window.electronAPI.onFileOpened(file=>{addExternalFile(file);persistPaperlineState()})}
+let paperZoom=Number(localStorage.getItem('paperline:zoom')||1);if(!Number.isFinite(paperZoom)||paperZoom<.7||paperZoom>1.5)paperZoom=1;
+function applyPaperZoom(){document.querySelectorAll('.editor,.preview').forEach(el=>el.style.setProperty('--paper-zoom',paperZoom));}
+applyPaperZoom();
+document.querySelector('.document-wrap').addEventListener('wheel',event=>{if(!(event.ctrlKey||event.metaKey))return;event.preventDefault();paperZoom=Math.min(1.5,Math.max(.7,paperZoom+(event.deltaY<0?.05:-.05)));localStorage.setItem('paperline:zoom',paperZoom.toFixed(2));applyPaperZoom()},{passive:false});
