@@ -27,10 +27,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Paperline-Windows
-          path: Paperline/release/*
+          path: Paperline/release/*Setup*.exe
+          if-no-files-found: error
 
   macos:
-    runs-on: macos-13
+    runs-on: macos-latest
     defaults:
       run:
         working-directory: Paperline
@@ -51,4 +52,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Paperline-macOS
-          path: Paperline/release/*
+          path: Paperline/release/*.dmg
+          if-no-files-found: error
