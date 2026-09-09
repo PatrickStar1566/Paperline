@@ -1,0 +1,59 @@
+{
+  "name": "paperline-markdown",
+  "version": "1.0.0",
+  "description": "A calm, Typora-inspired Markdown editor for macOS and Windows.",
+  "main": "electron-main.js",
+  "author": "Paperline",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "check": "node --check electron-main.js && node --check preload.js && node --check app.js",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.paperline.markdown",
+    "productName": "Paperline",
+    "files": [
+      "electron-main.js",
+      "preload.js",
+      "index.html",
+      "styles.css",
+      "app.js"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": ["dmg", "zip"],
+      "extendInfo": {
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "Markdown document",
+            "CFBundleTypeExtensions": ["md", "markdown"],
+            "CFBundleTypeRole": "Editor",
+            "LSHandlerRank": "Owner"
+          }
+        ]
+      }
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "fileAssociations": [
+        {
+          "ext": ["md", "markdown"],
+          "name": "Markdown document",
+          "description": "Paperline Markdown document",
+          "role": "Editor"
+        }
+      ]
+    }
+  }
+}

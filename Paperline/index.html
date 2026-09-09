@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paperline · Markdown 编辑器</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-row"><div class="brand-mark">P</div><div class="brand-copy"><strong>Paperline</strong><span>Markdown workspace</span></div><button class="icon-btn close-sidebar" id="closeSidebar" title="关闭侧栏">×</button></div>
+      <div class="workspace-label"><span>我的工作区</span><button class="icon-btn" title="添加文件" id="newFile">＋</button></div>
+      <div class="file-search"><span>⌕</span><input id="fileFilter" placeholder="筛选文件" /></div>
+      <nav class="file-tree" id="fileTree" aria-label="文件列表">
+        <div class="tree-group"><span class="tree-caret">⌄</span><span class="folder-icon">▾</span><span>我的笔记</span></div>
+        <button class="file-row active" data-file="welcome"><span class="file-icon">M</span><span class="file-name">欢迎使用 Paperline</span><span class="file-dot"></span></button>
+        <button class="file-row" data-file="ideas"><span class="file-icon">M</span><span class="file-name">产品想法备忘</span></button>
+        <button class="file-row" data-file="travel"><span class="file-icon">M</span><span class="file-name">周末旅行清单</span></button>
+        <div class="tree-group muted"><span class="tree-caret">⌄</span><span class="folder-icon">▾</span><span>归档</span></div>
+        <button class="file-row" data-file="archive"><span class="file-icon">M</span><span class="file-name">2024 年回顾</span></button>
+      </nav>
+      <div class="sidebar-footer"><span class="sync-dot"></span><span>已同步</span><span class="footer-spacer"></span><button class="icon-btn" title="设置">⚙</button></div>
+    </aside>
+    <main class="main-panel">
+      <header class="topbar"><button class="icon-btn menu-btn" id="openSidebar" title="打开侧栏">☰</button><div class="breadcrumbs"><span class="crumb-muted">我的笔记</span><span>/</span><strong id="docTitle">欢迎使用 Paperline</strong></div><div class="top-actions"><div class="save-status"><span class="status-dot"></span><span id="saveStatus">已保存</span></div><button class="icon-btn" title="搜索文档" id="openSearch">⌕</button><button class="icon-btn" title="切换主题" id="themeToggle">☼</button><button class="export-btn" id="openFileBtn">打开</button><button class="export-btn" id="saveFileBtn">保存</button><button class="export-btn" id="exportBtn">另存为</button><button class="avatar" title="账户">Y</button></div></header>
+      <section class="toolbar" aria-label="编辑工具栏"><div class="tool-group"><button class="tool-btn" data-action="bold" title="加粗 (Ctrl+B)"><b>B</b></button><button class="tool-btn italic" data-action="italic" title="斜体 (Ctrl+I)">I</button><button class="tool-btn" data-action="strike" title="删除线"><s>S</s></button></div><span class="tool-divider"></span><div class="tool-group"><button class="tool-btn" data-action="h1" title="一级标题">H1</button><button class="tool-btn" data-action="h2" title="二级标题">H2</button><button class="tool-btn" data-action="quote" title="引用">❝</button><button class="tool-btn" data-action="code" title="代码块">‹›</button></div><span class="tool-divider"></span><div class="tool-group"><button class="tool-btn" data-action="ul" title="无序列表">☷</button><button class="tool-btn" data-action="ol" title="有序列表">☷<small>1</small></button><button class="tool-btn" data-action="check" title="任务列表">☑</button><button class="tool-btn" data-action="link" title="插入链接">⌁</button></div><span class="toolbar-spacer"></span><div class="mode-switch" role="tablist"><button class="mode-btn active" data-mode="edit">编辑</button><button class="mode-btn" data-mode="preview">预览</button></div></section>
+      <div class="workspace" id="workspace"><div class="document-wrap"><div class="document-meta"><span id="docDate">最后编辑于今天 10:42</span><span class="meta-separator">·</span><span id="readTime">3 分钟阅读</span><button class="meta-more" title="更多操作">•••</button></div><textarea class="editor" id="editor" spellcheck="false" aria-label="Markdown 编辑器"></textarea><article class="preview markdown-body" id="preview" aria-label="Markdown 预览"></article><div class="editor-hint"><span>⌘</span><span>选中文本后使用工具栏快速格式化</span></div></div><aside class="outline" id="outline"><div class="outline-title">目录</div><div id="outlineItems"></div></aside></div>
+      <footer class="statusbar"><span id="wordCount">0 字</span><span class="status-sep"></span><span id="charCount">0 字符</span><span class="status-spacer"></span><span>Markdown</span><span class="status-sep"></span><span>UTF-8</span></footer>
+    </main>
+  </div>
+  <div class="search-modal" id="searchModal" aria-hidden="true"><div class="search-dialog"><div class="search-head"><span class="search-symbol">⌕</span><input id="searchInput" placeholder="搜索当前文档…" /><button id="closeSearch" class="icon-btn">×</button></div><div class="search-results" id="searchResults">输入关键词开始搜索</div></div></div>
+  <div class="toast" id="toast">已复制 Markdown</div>
+  <script src="app.js"></script>
+</body>
+</html>
