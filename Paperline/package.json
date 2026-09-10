@@ -11,6 +11,7 @@
     "dev": "electron .",
     "check": "node --check electron-main.js && node --check preload.js && node --check app.js",
     "dist:win": "electron-builder --win",
+    "dist:win-portable": "electron-builder --win portable",
     "dist:mac": "electron-builder --mac"
   },
   "devDependencies": {
