@@ -21,13 +21,13 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Build Windows portable app
-        run: npm run dist:win-portable
-      - name: Upload Windows portable artifact
+      - name: Build Windows installer
+        run: npm run dist:win
+      - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Paperline-Windows-Portable
-          path: Paperline/release/*.exe
+          name: Paperline-Windows
+          path: Paperline/release/*Setup*.exe
           if-no-files-found: error
 
   macos:

@@ -22,13 +22,15 @@ npm.cmd start
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-`npm start` 会直接启动开发版窗口，适合快速验收界面，不需要先生成安装包。需要交给其他人测试时，可生成免安装 Windows 版本：
+`npm start` 会直接启动开发版窗口，适合快速验收界面，不需要先生成安装包。需要交给其他人测试时，可生成 Windows 安装包：
 
 ```bash
-npm run dist:win-portable
+npm.cmd run dist:win
 ```
 
-生成的 `.exe` 位于 `release` 目录，双击即可运行，不需要安装。`npm run dist:win` 仍用于同时生成安装版和免安装版。
+生成的安装程序位于 `release` 目录，文件名通常包含 `Setup`。双击安装后即可运行。
+
+如需临时生成免安装版本，仍可使用 `npm.cmd run dist:win-portable`。
 
 ## Build installers
 
@@ -37,4 +39,4 @@ npm run dist:win
 npm run dist:mac
 ```
 
-Build each target on its native operating system. The Windows build creates an installer and portable executable; the macOS build creates a DMG and ZIP archive. Both builds register `.md` and `.markdown` files with Paperline.
+Build each target on its native operating system. The Windows build creates an NSIS installer; the macOS build creates a DMG and ZIP archive. Both builds register `.md` and `.markdown` files with Paperline.
