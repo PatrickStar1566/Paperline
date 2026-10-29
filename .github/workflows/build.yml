@@ -1,6 +1,10 @@
 name: Build Paperline
 
 on:
+  push:
+    tags:
+      - 'v*'
+      - 'V*'
   workflow_dispatch:
 
 permissions:
@@ -15,14 +19,49 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -cne "v$version" -and $env:GITHUB_REF_NAME -cne "V$version") {
+            throw "Tag must match package.json version: v$version or V$version"
+          }
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Paperline/package-lock.json
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
+      - name: Check JavaScript
+        run: npm run check
+      - name: Require Windows signing credentials
+        shell: pwsh
+        env:
+          WIN_CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WIN_CSC_LINK) -or [string]::IsNullOrWhiteSpace($env:WIN_CSC_KEY_PASSWORD)) {
+            throw 'Configure WINDOWS_CSC_LINK and WINDOWS_CSC_KEY_PASSWORD repository secrets before building.'
+          }
       - name: Build Windows installer
-        run: npm run dist:win
+        env:
+          WIN_CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: npm run dist:win -- --x64 --publish never -c.forceCodeSigning=true
+      - name: Verify installer signature
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem release/*Setup*.exe)
+          if ($installers.Count -eq 0) { throw 'No Windows installer found.' }
+          foreach ($installer in $installers) {
+            $signature = Get-AuthenticodeSignature -LiteralPath $installer.FullName
+            if ($signature.Status -ne 'Valid') {
+              throw "Invalid installer signature: $($installer.Name) ($($signature.Status))"
+            }
+          }
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v4
         with:
@@ -43,14 +82,42 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Paperline/package-lock.json
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Build macOS installers
-        run: npm run dist:mac
+        run: npm run dist:mac -- --publish never
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Paperline-macOS
           path: Paperline/release/*.dmg
           if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/* --clobber
+          else
+            gh release create "$TAG" release/* --verify-tag --title "Paperline $TAG" --generate-notes
+          fi
