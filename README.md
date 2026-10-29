@@ -1,6 +1,3 @@
-可以。现有 README 在 `Paperline` 子目录里，GitHub 首页需要仓库根目录的 `README.md`。点击截图中的 **Add a README**，粘贴以下内容，再提交即可：
-
-````markdown
 # Paperline
 
 一款基于 Electron 的 Markdown 桌面阅读与编辑工具，采用简洁、舒适的界面，支持 Windows 和 macOS。
@@ -83,4 +80,3 @@ Windows 自动构建要求先配置代码签名凭据。完整配置及发布步
 欢迎通过 [Issues](https://github.com/PatrickStar1566/Paperline/issues) 提交问题或建议。
 
 反馈问题时，请尽量提供操作系统、应用版本、复现步骤和相关截图。
-````
