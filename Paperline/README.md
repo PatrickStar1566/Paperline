@@ -51,9 +51,9 @@ Build each target on its native operating system. The Windows build creates an N
 
 为了避免版本混淆，标签必须严格等于 `v` 或 `V` 加 `package.json` 的 `version`，例如版本 `1.0.0` 对应 `v1.0.0`。标签不能重复用于不同版本。
 
-### 先准备 Windows 签名
+### 可选的 Windows 签名
 
-目前还没有配置实际证书。Windows 构建要求签名凭据，缺失时会失败，也不会创建本次 Release。普通本地打包命令不受此限制。
+未配置两个签名 Secrets 时，Windows 自动生成未签名测试安装包；两个 Secrets 齐全时，自动签名并验证安装包。只配置其中一个时会报告配置不完整；签名失败时不会降级发布未签名包。未签名包可能出现“未知发布者”或 SmartScreen 提示。
 
 对外分发需要受 Windows 信任的代码签名证书或云签名服务。自签名证书不能替代公信证书消除用户端信任提示。签名验证发布者身份和文件完整性，但不保证 SmartScreen 信誉提示立即消失。
 
@@ -72,7 +72,7 @@ Build each target on its native operating system. The Windows build creates an N
 
 3. 将剪贴板内容粘贴到 `WINDOWS_CSC_LINK`，单独保存密码 Secret；不要把证书、Base64 或密码提交到仓库或发在聊天里。完成后可执行 `Set-Clipboard -Value ''` 清空剪贴板。
 
-electron-builder 会对应用和安装包执行签名，CI 强制要求签名，并在上传前用 Windows Authenticode 验证安装包。Release 发布使用 GitHub 自动提供的 `GITHUB_TOKEN`，无需额外配置个人访问令牌。
+启用签名时，electron-builder 会对应用和安装包执行签名，并在上传前用 Windows Authenticode 验证安装包。未配置证书时跳过签名验证，构建摘要和新建 Release 的说明会标注未签名测试包。Release 发布使用 GitHub 自动提供的 `GITHUB_TOKEN`，无需额外配置个人访问令牌。
 
 ### 发布操作
 
@@ -86,7 +86,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-先确保上述签名凭据配置完成。进入 **Actions → Build Paperline** 查看进度；Windows 与 macOS 都成功后，进入 **Releases** 下载安装包。如果仓库或组织策略禁止 Actions 写入仓库，需要管理员允许工作流的 `contents: write` 权限。
+如需签名版本，先确保上述签名凭据配置完成；没有证书也可以构建未签名测试包。进入 **Actions → Build Paperline** 查看进度；Windows 与 macOS 都成功后，进入 **Releases** 下载安装包。如果仓库或组织策略禁止 Actions 写入仓库，需要管理员允许工作流的 `contents: write` 权限。
 
 后续版本先更新版本号和锁文件，再提交并推送新标签，例如：
 

@@ -13,6 +13,8 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
+    outputs:
+      signed: ${{ steps.signing.outputs.enabled }}
     defaults:
       run:
         working-directory: Paperline
@@ -37,21 +39,38 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Check JavaScript
         run: npm run check
-      - name: Require Windows signing credentials
+      - name: Detect Windows signing credentials
+        id: signing
         shell: pwsh
         env:
           WIN_CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:WIN_CSC_LINK) -or [string]::IsNullOrWhiteSpace($env:WIN_CSC_KEY_PASSWORD)) {
-            throw 'Configure WINDOWS_CSC_LINK and WINDOWS_CSC_KEY_PASSWORD repository secrets before building.'
+          $hasCertificate = -not [string]::IsNullOrWhiteSpace($env:WIN_CSC_LINK)
+          $hasPassword = -not [string]::IsNullOrWhiteSpace($env:WIN_CSC_KEY_PASSWORD)
+          if ($hasCertificate -ne $hasPassword) {
+            throw 'Signing configuration is incomplete. Set both WINDOWS_CSC_LINK and WINDOWS_CSC_KEY_PASSWORD, or remove both for an unsigned test build.'
           }
-      - name: Build Windows installer
+          if ($hasCertificate) {
+            'enabled=true' >> $env:GITHUB_OUTPUT
+            'Windows installer: signed; signature verification required.' >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            'enabled=false' >> $env:GITHUB_OUTPUT
+            'Windows installer: unsigned test build. Windows may display an unknown publisher warning.' >> $env:GITHUB_STEP_SUMMARY
+          }
+      - name: Build signed Windows installer
+        if: steps.signing.outputs.enabled == 'true'
         env:
           WIN_CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
         run: npm run dist:win -- --x64 --publish never -c.forceCodeSigning=true
+      - name: Build unsigned Windows test installer
+        if: steps.signing.outputs.enabled == 'false'
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run dist:win -- --x64 --publish never -c.forceCodeSigning=false
       - name: Verify installer signature
+        if: steps.signing.outputs.enabled == 'true'
         shell: pwsh
         run: |
           $installers = @(Get-ChildItem release/*Setup*.exe)
@@ -113,11 +132,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
+          WINDOWS_SIGNED: ${{ needs.windows.outputs.signed }}
         shell: bash
         run: |
           set -euo pipefail
+          if [ "$WINDOWS_SIGNED" = 'true' ]; then
+            printf '%s\n' 'Windows: digitally signed installer.' > release-notes.md
+          else
+            printf '%s\n' 'Windows: unsigned test installer. Windows may display an unknown publisher warning.' > release-notes.md
+          fi
+          printf '\n%s\n' 'macOS: unsigned and not notarized. Successful DMG creation does not guarantee Gatekeeper acceptance.' >> release-notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" release/* --clobber
           else
-            gh release create "$TAG" release/* --verify-tag --title "Paperline $TAG" --generate-notes
+            gh release create "$TAG" release/* --verify-tag --title "Paperline $TAG" --notes-file release-notes.md --generate-notes
           fi
