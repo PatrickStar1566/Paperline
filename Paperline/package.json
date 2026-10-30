@@ -1,6 +1,6 @@
 {
   "name": "paperline-markdown",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A calm, Typora-inspired Markdown editor for macOS and Windows.",
   "main": "electron-main.js",
   "author": "Paperline",

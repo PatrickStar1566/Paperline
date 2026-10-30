@@ -51,3 +51,15 @@ body.dark{--bg:#010409;--panel:#0d1117;--paper:#0d1117;--ink:#f0f6fc;--muted:#91
 
 .mermaid-diagram{margin:0 0 16px;padding:24px 16px;overflow:auto;text-align:center;background:var(--code);border:1px solid var(--line);border-radius:6px}
 .mermaid-diagram svg{display:block;max-width:100%;height:auto;margin:auto}.mermaid-error{padding:12px 16px;border-left:3px solid #d29922;color:var(--muted);background:var(--code)}
+
+/* Let the document use the space left by the adjustable outline. */
+@media(min-width:1001px){
+ .document-wrap{max-width:none}
+ .outline{width:var(--outline-width,140px);flex:0 0 var(--outline-width,140px);min-width:0;top:24px;margin:24px 24px 0 0;padding:8px 0 8px 14px;height:calc(100% - 48px);display:flex;flex-direction:column}
+ #outlineItems{min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+ .outline-title{flex-shrink:0}
+ .outline-resizer{position:absolute;left:-6px;top:0;bottom:0;width:12px;cursor:col-resize;touch-action:none;z-index:1;border-radius:4px}
+ .outline-resizer:hover,.outline-resizer:focus-visible,body.resizing-outline .outline-resizer{background:var(--accent-soft);outline:0}
+ .outline-resizer:hover::after,.outline-resizer:focus-visible::after,body.resizing-outline .outline-resizer::after{content:"";position:absolute;left:5px;top:0;bottom:0;width:2px;background:var(--accent)}
+}
+body.resizing-outline,body.resizing-outline *{cursor:col-resize!important;user-select:none!important}
