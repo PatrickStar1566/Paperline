@@ -63,12 +63,12 @@ jobs:
         env:
           WIN_CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
-        run: npm run dist:win -- --x64 --publish never -c.forceCodeSigning=true
+        run: node node_modules/electron-builder/cli.js --win nsis --x64 --publish never --config.forceCodeSigning=true
       - name: Build unsigned Windows test installer
         if: steps.signing.outputs.enabled == 'false'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npm run dist:win -- --x64 --publish never -c.forceCodeSigning=false
+        run: node node_modules/electron-builder/cli.js --win nsis --x64 --publish never --config.forceCodeSigning=false
       - name: Verify installer signature
         if: steps.signing.outputs.enabled == 'true'
         shell: pwsh

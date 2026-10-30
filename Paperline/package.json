@@ -33,12 +33,18 @@
     },
     "mac": {
       "category": "public.app-category.productivity",
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "extendInfo": {
         "CFBundleDocumentTypes": [
           {
             "CFBundleTypeName": "Markdown document",
-            "CFBundleTypeExtensions": ["md", "markdown"],
+            "CFBundleTypeExtensions": [
+              "md",
+              "markdown"
+            ],
             "CFBundleTypeRole": "Editor",
             "LSHandlerRank": "Owner"
           }
@@ -46,15 +52,24 @@
       }
     },
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "fileAssociations": [
         {
-          "ext": ["md", "markdown"],
+          "ext": [
+            "md",
+            "markdown"
+          ],
           "name": "Markdown document",
           "description": "Paperline Markdown document",
           "role": "Editor"
         }
       ]
     }
+  },
+  "dependencies": {
+    "mermaid": "^11.17.2"
   }
 }

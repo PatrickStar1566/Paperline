@@ -32,6 +32,21 @@ npm.cmd run dist:win
 
 如需临时生成免安装版本，仍可使用 `npm.cmd run dist:win-portable`。
 
+## Mermaid 图表
+
+预览模式支持 Mermaid 流程图、时序图等图表。渲染库随应用打包，无需连接在线 CDN，图表会随深浅主题切换。
+
+````markdown
+```mermaid
+flowchart TD
+    A[打开文档] --> B{包含 Mermaid?}
+    B -->|是| C[渲染图表]
+    B -->|否| D[显示正文]
+```
+````
+
+图表语法错误时显示提示并保留原始代码，不影响其他正文和图表。
+
 ## Build installers
 
 ```bash

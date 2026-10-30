@@ -48,3 +48,6 @@ body.dark{--bg:#010409;--panel:#0d1117;--paper:#0d1117;--ink:#f0f6fc;--muted:#91
 @media(max-width:680px){.document-wrap{width:calc(100% - 24px);padding-top:20px}.editor,.preview{padding:24px 20px 48px}.markdown-body{font-size:15px}.markdown-body h1{font-size:2em}}
 
 @media(min-width:1001px){.document-wrap{flex:1;width:auto;max-width:1100px;margin:0 24px}.outline{margin-right:24px}}
+
+.mermaid-diagram{margin:0 0 16px;padding:24px 16px;overflow:auto;text-align:center;background:var(--code);border:1px solid var(--line);border-radius:6px}
+.mermaid-diagram svg{display:block;max-width:100%;height:auto;margin:auto}.mermaid-error{padding:12px 16px;border-left:3px solid #d29922;color:var(--muted);background:var(--code)}

@@ -73,7 +73,7 @@ async function saveDesktopFile(saveAs=false){if(!desktop)return false;saveStatus
 function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function inline(t){return t.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/__([^_]+)__/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>').replace(/_([^_]+)_/g,'<em>$1</em>').replace(/~~([^~]+)~~/g,'<del>$1</del>')}
 function render(md){const a=md.replace(/\r/g,'').split('\n'),o=[],heads=[];let i=0;while(i<a.length){let l=a[i];if(/^```/.test(l)){let code=[],lang=esc(l.slice(3).trim());i++;while(i<a.length&&!/^```/.test(a[i]))code.push(a[i++]);i++;o.push(`<pre><code class="lang-${lang}">${esc(code.join('\n'))}</code></pre>`);continue}if(/^\|/.test(l)&&i+1<a.length&&/^\|?\s*:?-+/.test(a[i+1])){let rows=[l];i+=2;while(i<a.length&&/^\|/.test(a[i]))rows.push(a[i++]);let cells=x=>x.split('|').slice(1,-1).map(c=>c.trim());o.push(`<table><thead><tr>${cells(rows[0]).map(c=>`<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${rows.slice(1).map(r=>`<tr>${cells(r).map(c=>`<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);continue}let h=l.match(/^(#{1,6})\s+(.+)/);if(h){let id='h-'+heads.length;heads.push({text:h[2],level:h[1].length,id});o.push(`<h${h[1].length} id="${id}">${inline(h[2])}</h${h[1].length}>`);i++;continue}if(/^---+$/.test(l.trim())){o.push('<hr>');i++;continue}if(/^>\s?/.test(l)){let q=[];while(i<a.length&&/^>\s?/.test(a[i]))q.push(a[i++].replace(/^>\s?/,''));o.push(`<blockquote>${q.map(inline).join('<br>')}</blockquote>`);continue}if(/^\s*[-*+]\s+/.test(l)){let list=[];while(i<a.length&&/^\s*[-*+]\s+/.test(a[i]))list.push(a[i++].replace(/^\s*[-*+]\s+/,''));o.push(`<ul>${list.map(x=>{let t=x.match(/^\[([ xX])\]\s*(.*)/);return t?`<li class="task"><input type="checkbox" ${t[1].toLowerCase()==='x'?'checked':''}>${inline(t[2])}</li>`:`<li>${inline(x)}</li>`}).join('')}</ul>`);continue}if(/^\s*\d+\.\s+/.test(l)){let list=[];while(i<a.length&&/^\s*\d+\.\s+/.test(a[i]))list.push(a[i++].replace(/^\s*\d+\.\s+/,''));o.push(`<ol>${list.map(x=>`<li>${inline(x)}</li>`).join('')}</ol>`);continue}if(!l.trim()){i++;continue}let p=[];while(i<a.length&&a[i].trim()&&!/^(#{1,6})\s|^```|^\s*[-*+]\s+|^\s*\d+\.\s+|^>|^\|/.test(a[i]))p.push(a[i++]);o.push(`<p>${p.map(inline).join('<br>')}</p>`)}return{html:o.join(''),heads}}
-function update(){let r=render(editor.value);preview.innerHTML=r.html;preview.querySelectorAll('pre').forEach(pre=>{const button=document.createElement('button');button.className='code-copy';button.type='button';button.textContent='⧉';button.title='复制代码';button.setAttribute('aria-label','复制代码');button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(pre.querySelector('code').textContent);button.textContent='已复制';setTimeout(()=>button.textContent='⧉',1600)}catch(_){showToast('复制失败，请手动选择代码复制')}});pre.appendChild(button)});outlineItems.innerHTML=r.heads.length?r.heads.map(h=>`<button class="outline-item level-${h.level}" data-target="${h.id}">${esc(h.text)}</button>`).join(''):'<span class="outline-item">暂无标题</span>';document.getElementById('wordCount').textContent=`${editor.value.trim()?editor.value.trim().split(/\s+/).length:0} 字`;document.getElementById('charCount').textContent=`${editor.value.length} 字符`;document.getElementById('readTime').textContent=`${Math.max(1,Math.ceil(editor.value.length/520))} 分钟阅读`}
+function update(){let r=render(editor.value);preview.innerHTML=r.html;renderMermaidDiagrams();preview.querySelectorAll('pre').forEach(pre=>{const button=document.createElement('button');button.className='code-copy';button.type='button';button.textContent='⧉';button.title='复制代码';button.setAttribute('aria-label','复制代码');button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(pre.querySelector('code').textContent);button.textContent='已复制';setTimeout(()=>button.textContent='⧉',1600)}catch(_){showToast('复制失败，请手动选择代码复制')}});pre.appendChild(button)});outlineItems.innerHTML=r.heads.length?r.heads.map(h=>`<button class="outline-item level-${h.level}" data-target="${h.id}">${esc(h.text)}</button>`).join(''):'<span class="outline-item">暂无标题</span>';document.getElementById('wordCount').textContent=`${editor.value.trim()?editor.value.trim().split(/\s+/).length:0} 字`;document.getElementById('charCount').textContent=`${editor.value.length} 字符`;document.getElementById('readTime').textContent=`${Math.max(1,Math.ceil(editor.value.length/520))} 分钟阅读`}
 function load(key){current=key;let d=docs[key];currentPath=d.filePath||null;editor.value=d.content;document.getElementById('docTitle').textContent=d.title;document.getElementById('docDate').textContent=d.date;document.getElementById('readTime').textContent=d.read;document.querySelectorAll('.file-row').forEach(b=>b.classList.toggle('active',b.dataset.file===key));update();saveStatus.textContent='已保存'}
 function dirty(){saveStatus.textContent='正在保存…';clearTimeout(window.saveTimer);window.saveTimer=setTimeout(()=>saveStatus.textContent='已保存',650)}function surround(pre,post=''){let s=editor.selectionStart,e=editor.selectionEnd,v=editor.value,t=v.slice(s,e)||'文本';editor.setRangeText(pre+t+post,s,e,'select');editor.focus();update();dirty()}
 document.querySelectorAll('.file-row').forEach(b=>b.addEventListener('click',()=>load(b.dataset.file)));editor.addEventListener('input',()=>{docs[current].content=editor.value;update();dirty()});document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');let p=b.dataset.mode==='preview';editor.classList.toggle('hidden',p);preview.classList.toggle('active',p);document.querySelector('.editor-hint').style.display=p?'none':''}));
@@ -112,3 +112,36 @@ try{savedTheme=localStorage.getItem('paperline:theme')}catch(_){}
 document.body.classList.toggle('dark',savedTheme!=='light');
 document.getElementById('themeToggle').textContent=document.body.classList.contains('dark')?'☾':'☼';
 document.getElementById('themeToggle').addEventListener('click',()=>{try{localStorage.setItem('paperline:theme',document.body.classList.contains('dark')?'dark':'light')}catch(_){}});
+
+// Render diagrams from local assets, keeping stale async results out of new documents.
+var mermaidRenderId=0;
+async function renderMermaidDiagrams(){
+  // The first document is loaded before theme restoration finishes.
+  await Promise.resolve();
+  if(!window.mermaid)return;
+  window.mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:document.body.classList.contains('dark')?'dark':'default',flowchart:{htmlLabels:false},maxTextSize:50000});
+  const blocks=Array.from(preview.querySelectorAll('pre > code.lang-mermaid'));
+  for(const code of blocks){
+    const pre=code.parentElement;
+    if(!preview.contains(pre))continue;
+    const figure=document.createElement('figure');
+    figure.className='mermaid-diagram';
+    figure.setAttribute('aria-label','Mermaid 图表');
+    try{
+      const result=await window.mermaid.render('paperline-mermaid-'+(++mermaidRenderId),code.textContent);
+      if(!preview.contains(pre))continue;
+      figure.innerHTML=result.svg;
+      pre.replaceWith(figure);
+      result.bindFunctions?.(figure);
+    }catch(error){
+      if(!preview.contains(pre))continue;
+      const message=document.createElement('p');
+      message.className='mermaid-error';
+      message.setAttribute('role','status');
+      message.textContent='Mermaid 图表无法渲染，请检查语法。原始代码保留如下。';
+      pre.before(message);
+      console.warn('Mermaid diagram rendering failed',error);
+    }
+  }
+}
+document.getElementById('themeToggle').addEventListener('click',update);
